@@ -2,7 +2,7 @@
 
 A partial implementation of sqlx for Fermyon Spin's SQLite database.
 
-Things that work:
+Things that work (at least in my one, super simple, test case!):
 
 * Standard fetching and execution functions
 
@@ -29,7 +29,7 @@ struct Pet {
 
 #[http_component]
 async fn handle_sqlxtest(_req: Request) -> anyhow::Result<impl IntoResponse> {
-    let sqlx_conn = spin_sqlx::SqlxConnection::open_default()?;
+    let sqlx_conn = spin_sqlx::Connection::open_default()?;
 
     let pets: Vec<Pet> = sqlx::query_as("SELECT * FROM pets WHERE age < ?")
         .bind(7)

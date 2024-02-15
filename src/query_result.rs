@@ -1,4 +1,4 @@
-use super::{SpinSqliteTypeInfo, SqlxConnection};
+use super::{SpinSqliteTypeInfo, Connection};
 
 use sqlx::ColumnIndex;
 
@@ -25,7 +25,7 @@ impl SpinSqliteColumn {
 }
 
 impl sqlx::Row for SpinSqliteRow {
-    type Database = SqlxConnection;
+    type Database = Connection;
 
     fn columns(&self) -> &[<Self::Database as sqlx::Database>::Column] {
         &self.columns
@@ -62,7 +62,7 @@ impl Extend<SpinSqliteQueryResult> for SpinSqliteQueryResult {
 }
 
 impl sqlx::Column for SpinSqliteColumn {
-    type Database = SqlxConnection;
+    type Database = Connection;
 
     fn ordinal(&self) -> usize {
         self.index
@@ -83,7 +83,7 @@ pub struct SpinSqliteValue {
 }
 
 impl<'q> sqlx::ValueRef<'q> for SpinSqliteValue {
-    type Database = SqlxConnection;
+    type Database = Connection;
 
     fn to_owned(&self) -> <Self::Database as sqlx::Database>::Value {
         self.clone()
@@ -106,7 +106,7 @@ impl<'q> sqlx::ValueRef<'q> for SpinSqliteValue {
 }
 
 impl sqlx::Value for SpinSqliteValue {
-    type Database = SqlxConnection;
+    type Database = Connection;
 
     fn as_ref(&self) -> <Self::Database as sqlx::database::HasValueRef<'_>>::ValueRef {
         todo!()

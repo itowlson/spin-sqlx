@@ -1,0 +1,17 @@
+[package]
+name = "fetch-one"
+authors = ["itowlson <ivan.towlson@fermyon.com>"]
+description = ""
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = "1"
+spin-sdk = "2.2"
+spin-sqlx = { path = "../.." }
+sqlx = "0.7.2"
+
+[workspace]

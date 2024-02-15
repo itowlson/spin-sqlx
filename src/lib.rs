@@ -15,9 +15,9 @@ pub use type_info::SpinSqliteTypeInfo;
 use crate::error::AsSqlxResult;
 
 #[derive(Debug)]
-pub struct SqlxConnection(spin_sdk::sqlite::Connection);
+pub struct Connection(spin_sdk::sqlite::Connection);
 
-impl SqlxConnection {
+impl Connection {
     pub fn new(conn: spin_sdk::sqlite::Connection) -> Self {
         Self(conn)
     }
@@ -32,14 +32,14 @@ impl SqlxConnection {
 }
 
 #[derive(Clone, Debug)]
-pub struct SqlxConnectionOptions {
+pub struct ConnectionOptions {
     label: String,
 }
 
-impl sqlx::Connection for SqlxConnection {
-    type Database = SqlxConnection;
+impl sqlx::Connection for Connection {
+    type Database = Connection;
 
-    type Options = SqlxConnectionOptions;
+    type Options = ConnectionOptions;
 
     fn close(self) -> BoxFuture<'static, Result<(), sqlx::Error>> {
         Box::pin(async move { Ok(()) })
@@ -67,10 +67,10 @@ impl sqlx::Connection for SqlxConnection {
     fn should_flush(&self) -> bool { false }
 }
 
-impl sqlx::Database for SqlxConnection {
-    type Connection = SqlxConnection;
+impl sqlx::Database for Connection {
+    type Connection = Connection;
 
-    type TransactionManager = SqlxConnection;
+    type TransactionManager = Connection;
 
     type Row = SpinSqliteRow;
 
@@ -88,8 +88,8 @@ impl sqlx::Database for SqlxConnection {
 }
 
 
-impl<'q> sqlx::database::HasArguments<'q> for SqlxConnection {
-    type Database = SqlxConnection;
+impl<'q> sqlx::database::HasArguments<'q> for Connection {
+    type Database = Connection;
 
     type Arguments = SpinSqliteArgs;
 
@@ -108,7 +108,7 @@ impl SpinSqliteArgs {
 }
 
 impl<'q> sqlx::Arguments<'q> for SpinSqliteArgs {
-    type Database = SqlxConnection;
+    type Database = Connection;
 
     fn reserve(&mut self, _additional: usize, _size: usize) {
     }
@@ -121,14 +121,14 @@ impl<'q> sqlx::Arguments<'q> for SpinSqliteArgs {
     }
 }
 
-impl<'q> sqlx::IntoArguments<'q, SqlxConnection> for SpinSqliteArgs {
-    fn into_arguments(self) -> <SqlxConnection as sqlx::database::HasArguments<'q>>::Arguments {
+impl<'q> sqlx::IntoArguments<'q, Connection> for SpinSqliteArgs {
+    fn into_arguments(self) -> <Connection as sqlx::database::HasArguments<'q>>::Arguments {
         self
     }
 }
 
-impl<'q> sqlx::database::HasStatement<'q> for SqlxConnection {
-    type Database = SqlxConnection;
+impl<'q> sqlx::database::HasStatement<'q> for Connection {
+    type Database = Connection;
 
     type Statement = SpinSqliteStmt;
 }
@@ -145,7 +145,7 @@ impl SpinSqliteStmt {
 }
 
 impl<'q> sqlx::Statement<'q> for SpinSqliteStmt {
-    type Database = SqlxConnection;
+    type Database = Connection;
 
     fn to_owned(&self) -> <Self::Database as sqlx::database::HasStatement<'static>>::Statement {
         self.clone()
@@ -209,14 +209,14 @@ impl<'q> sqlx::Statement<'q> for SpinSqliteStmt {
     }
 }
 
-impl<'q> sqlx::database::HasValueRef<'q> for SqlxConnection {
-    type Database = SqlxConnection;
+impl<'q> sqlx::database::HasValueRef<'q> for Connection {
+    type Database = Connection;
 
     type ValueRef = SpinSqliteValue;
 }
 
-impl sqlx::TransactionManager for SqlxConnection {
-    type Database = SqlxConnection;
+impl sqlx::TransactionManager for Connection {
+    type Database = Connection;
 
     fn begin(
         _conn: &mut <Self::Database as sqlx::Database>::Connection,
@@ -241,7 +241,7 @@ impl sqlx::TransactionManager for SqlxConnection {
     }
 }
 
-impl std::str::FromStr for SqlxConnectionOptions {
+impl std::str::FromStr for ConnectionOptions {
     type Err = sqlx::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -249,8 +249,8 @@ impl std::str::FromStr for SqlxConnectionOptions {
     }
 }
 
-impl sqlx::ConnectOptions for SqlxConnectionOptions {
-    type Connection = SqlxConnection;
+impl sqlx::ConnectOptions for ConnectionOptions {
+    type Connection = Connection;
 
     fn from_url(url: &url::Url) -> Result<Self, sqlx::Error> {
         let label = url.host().as_sqlx_result()?.to_string();
@@ -263,7 +263,7 @@ impl sqlx::ConnectOptions for SqlxConnectionOptions {
     {
         Box::pin(async move {
             spin_sdk::sqlite::Connection::open(&self.label)
-                .map(|conn| SqlxConnection(conn))
+                .map(|conn| Connection(conn))
                 .map_err(|e| sqlx::Error::AnyDriverError(Box::new(e)))
         })
     }
@@ -277,8 +277,8 @@ impl sqlx::ConnectOptions for SqlxConnectionOptions {
     }
 }
 
-impl<'c> sqlx::Executor<'c> for &'c SqlxConnection {
-    type Database = SqlxConnection;
+impl<'c> sqlx::Executor<'c> for &'c Connection {
+    type Database = Connection;
 
     fn fetch_many<'e, 'q: 'e, E: 'q>(
         self,
