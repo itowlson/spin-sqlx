@@ -55,6 +55,69 @@ impl sqlx::Type<Connection> for String {
     }
 }
 
+// --- INTEGER TYPE CONVERSIONS ---
+// TODO: these all follow the same pattern: could they be a macro?
+
+impl<'q> sqlx::Encode<'q, Connection> for i16 {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+        buf.push(spin_sdk::sqlite::Value::Integer((*self).into()));
+        sqlx::encode::IsNull::No
+    }
+}
+impl<'r> sqlx::Decode<'r, Connection> for i16 {
+    fn decode(value: <Connection as sqlx::database::HasValueRef<'r>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+        match value.inner {
+            spin_sdk::sqlite::Value::Integer(n) => into_or_err(n),
+            _ => Err(Box::new(BadTypeError)),
+        }
+    }
+}
+impl sqlx::Type<Connection> for i16 {
+    fn type_info() -> <Connection as sqlx::Database>::TypeInfo {
+        SpinSqliteTypeInfo::Int
+    }
+}
+
+impl<'q> sqlx::Encode<'q, Connection> for u16 {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+        buf.push(spin_sdk::sqlite::Value::Integer((*self).into()));
+        sqlx::encode::IsNull::No
+    }
+}
+impl<'r> sqlx::Decode<'r, Connection> for u16 {
+    fn decode(value: <Connection as sqlx::database::HasValueRef<'r>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+        match value.inner {
+            spin_sdk::sqlite::Value::Integer(n) => into_or_err(n),
+            _ => Err(Box::new(BadTypeError)),
+        }
+    }
+}
+impl sqlx::Type<Connection> for u16 {
+    fn type_info() -> <Connection as sqlx::Database>::TypeInfo {
+        SpinSqliteTypeInfo::Int
+    }
+}
+
+impl<'q> sqlx::Encode<'q, Connection> for i32 {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+        buf.push(spin_sdk::sqlite::Value::Integer((*self).into()));
+        sqlx::encode::IsNull::No
+    }
+}
+impl<'r> sqlx::Decode<'r, Connection> for i32 {
+    fn decode(value: <Connection as sqlx::database::HasValueRef<'r>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+        match value.inner {
+            spin_sdk::sqlite::Value::Integer(n) => into_or_err(n),
+            _ => Err(Box::new(BadTypeError)),
+        }
+    }
+}
+impl sqlx::Type<Connection> for i32 {
+    fn type_info() -> <Connection as sqlx::Database>::TypeInfo {
+        SpinSqliteTypeInfo::Int
+    }
+}
+
 impl<'q> sqlx::Encode<'q, Connection> for u32 {
     fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
         buf.push(spin_sdk::sqlite::Value::Integer((*self).into()));
@@ -74,6 +137,30 @@ impl sqlx::Type<Connection> for u32 {
         SpinSqliteTypeInfo::Int
     }
 }
+
+impl<'q> sqlx::Encode<'q, Connection> for i64 {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+        buf.push(spin_sdk::sqlite::Value::Integer((*self).into()));
+        sqlx::encode::IsNull::No
+    }
+}
+impl<'r> sqlx::Decode<'r, Connection> for i64 {
+    fn decode(value: <Connection as sqlx::database::HasValueRef<'r>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+        match value.inner {
+            spin_sdk::sqlite::Value::Integer(n) => into_or_err(n),
+            _ => Err(Box::new(BadTypeError)),
+        }
+    }
+}
+impl sqlx::Type<Connection> for i64 {
+    fn type_info() -> <Connection as sqlx::Database>::TypeInfo {
+        SpinSqliteTypeInfo::Int
+    }
+}
+
+// We cannot do u64 as it cannot be encoded to an i64 (and encode() doesn't let us return an error for this)
+
+// --- END INTEGERS ---
 
 impl<'q> sqlx::Encode<'q, Connection> for bool {
     fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
@@ -106,12 +193,32 @@ impl<'q> sqlx::Encode<'q, Connection> for f32 {
 impl<'r> sqlx::Decode<'r, Connection> for f32 {
     fn decode(value: <Connection as sqlx::database::HasValueRef<'r>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
         match value.inner {
-            spin_sdk::sqlite::Value::Real(n) => Ok(n as f32),  // TODO: what could go wrong eh
+            spin_sdk::sqlite::Value::Real(n) => Ok(n as f32),  // `as` is the best conversion we have
             _ => Err(Box::new(BadTypeError)),
         }
     }
 }
 impl sqlx::Type<Connection> for f32 {
+    fn type_info() -> <Connection as sqlx::Database>::TypeInfo {
+        SpinSqliteTypeInfo::Real
+    }
+}
+
+impl<'q> sqlx::Encode<'q, Connection> for f64 {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+        buf.push(spin_sdk::sqlite::Value::Real((*self).into()));
+        sqlx::encode::IsNull::No
+    }
+}
+impl<'r> sqlx::Decode<'r, Connection> for f64 {
+    fn decode(value: <Connection as sqlx::database::HasValueRef<'r>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+        match value.inner {
+            spin_sdk::sqlite::Value::Real(n) => Ok(n),
+            _ => Err(Box::new(BadTypeError)),
+        }
+    }
+}
+impl sqlx::Type<Connection> for f64 {
     fn type_info() -> <Connection as sqlx::Database>::TypeInfo {
         SpinSqliteTypeInfo::Real
     }
