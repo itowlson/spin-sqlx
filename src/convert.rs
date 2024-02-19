@@ -49,6 +49,12 @@ impl<'r> sqlx::Decode<'r, Connection> for String {
         }
     }
 }
+impl<'q> sqlx::Encode<'q, Connection> for String {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+        buf.push(spin_sdk::sqlite::Value::Text(self.to_string()));
+        sqlx::encode::IsNull::No
+    }
+}
 impl sqlx::Type<Connection> for String {
     fn type_info() -> <Connection as sqlx::Database>::TypeInfo {
         SpinSqliteTypeInfo::Text
@@ -257,5 +263,17 @@ impl<'r> sqlx::Decode<'r, Connection> for Vec<u8> {
 impl sqlx::Type<Connection> for Vec<u8> {
     fn type_info() -> <Connection as sqlx::Database>::TypeInfo {
         SpinSqliteTypeInfo::Blob
+    }
+}
+
+impl<'q, T: sqlx::Encode<'q, Connection>> sqlx::Encode<'q, Connection> for Option<T> {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+        match self {
+            Some(v) => v.encode_by_ref(buf),
+            None => {
+                buf.push(spin_sdk::sqlite::Value::Null);
+                sqlx::encode::IsNull::Yes
+            }
+        }
     }
 }
