@@ -25,7 +25,7 @@ async fn handle_fetch_many(_req: IncomingRequest, resp: ResponseOutparam) {
     let mut resp_stm = og.take_body();
     resp.set(og);
 
-    let sqlx_conn = match spin_sqlx::Connection::open_default() {
+    let sqlx_conn = match spin_sqlx::sqlite::Connection::open_default() {
         Ok(c) => c,
         Err(e) => {
             _ = resp_stm.send(format!("{e:?}").into()).await;
