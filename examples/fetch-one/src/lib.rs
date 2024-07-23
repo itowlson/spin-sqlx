@@ -17,7 +17,7 @@ impl std::fmt::Display for Pet {
 
 #[http_component]
 async fn handle_fetch_one(_req: Request) -> anyhow::Result<impl IntoResponse> {
-    let sqlx_conn = spin_sqlx::Connection::open_default()?;
+    let sqlx_conn = spin_sqlx::sqlite::Connection::open_default()?;
 
     let pet: Pet = sqlx::query_as("SELECT * FROM pets WHERE name = ?")
         .bind("Slats")

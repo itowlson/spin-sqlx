@@ -3,7 +3,7 @@ use spin_sdk::http_component;
 
 #[http_component]
 async fn handle_execute_insert(_req: Request) -> anyhow::Result<impl IntoResponse> {
-    let sqlx_conn = spin_sqlx::Connection::open_default()?;
+    let sqlx_conn = spin_sqlx::sqlite::Connection::open_default()?;
 
     sqlx::query("INSERT INTO pets(age, name, is_finicky) VALUES (?, ?, ?)")
         .bind(1)
