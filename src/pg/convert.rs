@@ -29,9 +29,9 @@ fn into_or_err<T: TryInto<U>, U>(value: T) -> Result<U, sqlx::error::BoxDynError
 }
 
 impl<'q> sqlx::Encode<'q, Connection> for &str {
-    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
         buf.push(spin_sdk::pg::ParameterValue::Str(self.to_string()));
-        sqlx::encode::IsNull::No
+        Ok(sqlx::encode::IsNull::No)
     }
 }
 
@@ -42,7 +42,7 @@ impl sqlx::Type<Connection> for &str {
 }
 
 impl<'r> sqlx::Decode<'r, Connection> for String {
-    fn decode(value: <Connection as sqlx::database::HasValueRef<'r>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+    fn decode(value: <Connection as sqlx::Database>::ValueRef<'r>) -> Result<Self, sqlx::error::BoxDynError> {
         match value.inner {
             spin_sdk::pg::DbValue::Str(s) => Ok(s),
             _ => Err(Box::new(BadTypeError)),
@@ -50,9 +50,9 @@ impl<'r> sqlx::Decode<'r, Connection> for String {
     }
 }
 impl<'q> sqlx::Encode<'q, Connection> for String {
-    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
         buf.push(spin_sdk::pg::ParameterValue::Str(self.to_string()));
-        sqlx::encode::IsNull::No
+        Ok(sqlx::encode::IsNull::No)
     }
 }
 impl sqlx::Type<Connection> for String {
@@ -68,13 +68,13 @@ impl sqlx::Type<Connection> for String {
 // TODO: we could widen them?  Bit ugh though
 
 impl<'q> sqlx::Encode<'q, Connection> for i16 {
-    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
         buf.push(spin_sdk::pg::ParameterValue::Int16((*self).into()));
-        sqlx::encode::IsNull::No
+        Ok(sqlx::encode::IsNull::No)
     }
 }
 impl<'r> sqlx::Decode<'r, Connection> for i16 {
-    fn decode(value: <Connection as sqlx::database::HasValueRef<'r>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+    fn decode(value: <Connection as sqlx::Database>::ValueRef<'r>) -> Result<Self, sqlx::error::BoxDynError> {
         match value.inner {
             spin_sdk::pg::DbValue::Int16(n) => into_or_err(n),
             _ => Err(Box::new(BadTypeError)),
@@ -88,13 +88,13 @@ impl sqlx::Type<Connection> for i16 {
 }
 
 impl<'q> sqlx::Encode<'q, Connection> for i32 {
-    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
         buf.push(spin_sdk::pg::ParameterValue::Int32((*self).into()));
-        sqlx::encode::IsNull::No
+        Ok(sqlx::encode::IsNull::No)
     }
 }
 impl<'r> sqlx::Decode<'r, Connection> for i32 {
-    fn decode(value: <Connection as sqlx::database::HasValueRef<'r>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+    fn decode(value: <Connection as sqlx::Database>::ValueRef<'r>) -> Result<Self, sqlx::error::BoxDynError> {
         match value.inner {
             spin_sdk::pg::DbValue::Int16(n) => into_or_err(n),
             spin_sdk::pg::DbValue::Int32(n) => into_or_err(n),
@@ -109,13 +109,13 @@ impl sqlx::Type<Connection> for i32 {
 }
 
 impl<'q> sqlx::Encode<'q, Connection> for i64 {
-    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
         buf.push(spin_sdk::pg::ParameterValue::Int64((*self).into()));
-        sqlx::encode::IsNull::No
+        Ok(sqlx::encode::IsNull::No)
     }
 }
 impl<'r> sqlx::Decode<'r, Connection> for i64 {
-    fn decode(value: <Connection as sqlx::database::HasValueRef<'r>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+    fn decode(value: <Connection as sqlx::Database>::ValueRef<'r>) -> Result<Self, sqlx::error::BoxDynError> {
         match value.inner {
             spin_sdk::pg::DbValue::Int16(n) => into_or_err(n),
             spin_sdk::pg::DbValue::Int32(n) => into_or_err(n),
@@ -133,13 +133,13 @@ impl sqlx::Type<Connection> for i64 {
 // --- END INTEGERS ---
 
 impl<'q> sqlx::Encode<'q, Connection> for bool {
-    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
         buf.push(spin_sdk::pg::ParameterValue::Boolean(*self));
-        sqlx::encode::IsNull::No
+        Ok(sqlx::encode::IsNull::No)
     }
 }
 impl<'r> sqlx::Decode<'r, Connection> for bool {
-    fn decode(value: <Connection as sqlx::database::HasValueRef<'r>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+    fn decode(value: <Connection as sqlx::Database>::ValueRef<'r>) -> Result<Self, sqlx::error::BoxDynError> {
         match value.inner {
             spin_sdk::pg::DbValue::Boolean(b) => Ok(b),
             _ => Err(Box::new(BadTypeError)),
@@ -153,13 +153,13 @@ impl sqlx::Type<Connection> for bool {
 }
 
 impl<'q> sqlx::Encode<'q, Connection> for f32 {
-    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
         buf.push(spin_sdk::pg::ParameterValue::Floating32((*self).into()));
-        sqlx::encode::IsNull::No
+        Ok(sqlx::encode::IsNull::No)
     }
 }
 impl<'r> sqlx::Decode<'r, Connection> for f32 {
-    fn decode(value: <Connection as sqlx::database::HasValueRef<'r>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+    fn decode(value: <Connection as sqlx::Database>::ValueRef<'r>) -> Result<Self, sqlx::error::BoxDynError> {
         match value.inner {
             spin_sdk::pg::DbValue::Floating32(n) => Ok(n as f32),  // `as` is the best conversion we have
             _ => Err(Box::new(BadTypeError)),
@@ -173,13 +173,13 @@ impl sqlx::Type<Connection> for f32 {
 }
 
 impl<'q> sqlx::Encode<'q, Connection> for f64 {
-    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
         buf.push(spin_sdk::pg::ParameterValue::Floating64((*self).into()));
-        sqlx::encode::IsNull::No
+        Ok(sqlx::encode::IsNull::No)
     }
 }
 impl<'r> sqlx::Decode<'r, Connection> for f64 {
-    fn decode(value: <Connection as sqlx::database::HasValueRef<'r>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+    fn decode(value: <Connection as sqlx::Database>::ValueRef<'r>) -> Result<Self, sqlx::error::BoxDynError> {
         match value.inner {
             spin_sdk::pg::DbValue::Floating64(n) => Ok(n),
             _ => Err(Box::new(BadTypeError)),
@@ -193,15 +193,15 @@ impl sqlx::Type<Connection> for f64 {
 }
 
 impl<'q> sqlx::Encode<'q, Connection> for &[u8] {
-    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
         buf.push(spin_sdk::pg::ParameterValue::Binary(self.to_vec()));
-        sqlx::encode::IsNull::No
+        Ok(sqlx::encode::IsNull::No)
     }
 }
 impl<'q, const N: usize> sqlx::Encode<'q, Connection> for &[u8; N] {
-    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
         buf.push(spin_sdk::pg::ParameterValue::Binary(self.to_vec()));
-        sqlx::encode::IsNull::No
+        Ok(sqlx::encode::IsNull::No)
     }
 }
 impl sqlx::Type<Connection> for &[u8] {
@@ -215,7 +215,7 @@ impl<const N: usize> sqlx::Type<Connection> for &[u8; N] {
     }
 }
 impl<'r> sqlx::Decode<'r, Connection> for Vec<u8> {
-    fn decode(value: <Connection as sqlx::database::HasValueRef<'r>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+    fn decode(value: <Connection as sqlx::Database>::ValueRef<'r>) -> Result<Self, sqlx::error::BoxDynError> {
         match value.inner {
             spin_sdk::pg::DbValue::Binary(v) => Ok(v),
             _ => Err(Box::new(BadTypeError)),
@@ -229,12 +229,12 @@ impl sqlx::Type<Connection> for Vec<u8> {
 }
 
 impl<'q, T: sqlx::Encode<'q, Connection>> sqlx::Encode<'q, Connection> for Option<T> {
-    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+    fn encode_by_ref(&self, buf: &mut <Connection as sqlx::Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
         match self {
             Some(v) => v.encode_by_ref(buf),
             None => {
                 buf.push(spin_sdk::pg::ParameterValue::DbNull);
-                sqlx::encode::IsNull::Yes
+                Ok(sqlx::encode::IsNull::Yes)
             }
         }
     }

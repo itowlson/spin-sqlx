@@ -7,7 +7,7 @@ exclude = ["examples"]
 
 [dependencies]
 spin-sdk = "3.0"
-sqlx = "0.7.2"
+sqlx = "0.8.0"
 
 anyhow = "1"
 either = "1.6.1"

@@ -14,6 +14,6 @@ futures = { version = "0.3.19", default-features = false }
 spin-executor = "3.0"
 spin-sdk = "3.0"
 spin-sqlx = { path = "../.." }
-sqlx = "0.7.2"
+sqlx = "0.8.0"
 
 [workspace]

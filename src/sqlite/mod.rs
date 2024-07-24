@@ -82,18 +82,17 @@ impl sqlx::Database for Connection {
 
     type Value = SpinSqliteValue;
 
+    type Arguments<'q> = SpinSqliteArgs;
+
+    type ArgumentBuffer<'q> = Vec<spin_sdk::sqlite::Value>;
+
+    type Statement<'q> = SpinSqliteStmt;
+
+    type ValueRef<'r> = SpinSqliteValue;
+
     const NAME: &'static str = "Spin SQLite";
 
     const URL_SCHEMES: &'static [&'static str] = &["spin-sqlite"];
-}
-
-
-impl<'q> sqlx::database::HasArguments<'q> for Connection {
-    type Database = Connection;
-
-    type Arguments = SpinSqliteArgs;
-
-    type ArgumentBuffer = Vec<spin_sdk::sqlite::Value>;
 }
 
 #[derive(Default)]
@@ -113,24 +112,23 @@ impl<'q> sqlx::Arguments<'q> for SpinSqliteArgs {
     fn reserve(&mut self, _additional: usize, _size: usize) {
     }
 
-    fn add<T>(&mut self, value: T)
+    fn add<T>(&mut self, value: T) -> Result<(), sqlx::error::BoxDynError>
     where
-        T: 'q + Send + sqlx::Encode<'q, Self::Database> + sqlx::Type<Self::Database>
+        T: 'q + sqlx::Encode<'q, Self::Database> + sqlx::Type<Self::Database>
     {
-        let _ = value.encode_by_ref(&mut self.inner);
+        let _ = value.encode_by_ref(&mut self.inner)?;
+        Ok(())
+    }
+    
+    fn len(&self) -> usize {
+        self.inner.len()
     }
 }
 
 impl<'q> sqlx::IntoArguments<'q, Connection> for SpinSqliteArgs {
-    fn into_arguments(self) -> <Connection as sqlx::database::HasArguments<'q>>::Arguments {
+    fn into_arguments(self) -> <Connection as sqlx::Database>::Arguments<'q> {
         self
     }
-}
-
-impl<'q> sqlx::database::HasStatement<'q> for Connection {
-    type Database = Connection;
-
-    type Statement = SpinSqliteStmt;
 }
 
 #[derive(Clone, Default)]
@@ -147,7 +145,7 @@ impl SpinSqliteStmt {
 impl<'q> sqlx::Statement<'q> for SpinSqliteStmt {
     type Database = Connection;
 
-    fn to_owned(&self) -> <Self::Database as sqlx::database::HasStatement<'static>>::Statement {
+    fn to_owned(&self) -> <Self::Database as sqlx::Database>::Statement<'static> {
         self.clone()
     }
 
@@ -163,7 +161,7 @@ impl<'q> sqlx::Statement<'q> for SpinSqliteStmt {
         todo!("prepared statements are not implemented for Spin SQLite")
     }
 
-    fn query(&self) -> sqlx::query::Query<'_, Self::Database, <Self::Database as sqlx::database::HasArguments<'_>>::Arguments> {
+    fn query(&self) -> sqlx::query::Query<'_, Self::Database, <Self::Database as sqlx::Database>::Arguments<'q>> {
         todo!("prepared statements are not implemented for Spin SQLite")
     }
 
@@ -176,7 +174,7 @@ impl<'q> sqlx::Statement<'q> for SpinSqliteStmt {
 
     fn query_as<O>(
         &self,
-    ) -> sqlx::query::QueryAs<'_, Self::Database, O, <Self::Database as sqlx::database::HasArguments<'_>>::Arguments>
+    ) -> sqlx::query::QueryAs<'_, Self::Database, O, <Self::Database as sqlx::Database>::Arguments<'_>>
     where
         O: for<'r> sqlx::FromRow<'r, <Self::Database as sqlx::Database>::Row>
     {
@@ -193,7 +191,7 @@ impl<'q> sqlx::Statement<'q> for SpinSqliteStmt {
 
     fn query_scalar<O>(
         &self,
-    ) -> sqlx::query::QueryScalar<'_, Self::Database, O, <Self::Database as sqlx::database::HasArguments<'_>>::Arguments>
+    ) -> sqlx::query::QueryScalar<'_, Self::Database, O, <Self::Database as sqlx::Database>::Arguments<'_>>
     where
         (O,): for<'r> sqlx::FromRow<'r, <Self::Database as sqlx::Database>::Row>
     {
@@ -207,12 +205,6 @@ impl<'q> sqlx::Statement<'q> for SpinSqliteStmt {
     {
         todo!("prepared statements are not implemented for Spin SQLite")
     }
-}
-
-impl<'q> sqlx::database::HasValueRef<'q> for Connection {
-    type Database = Connection;
-
-    type ValueRef = SpinSqliteValue;
 }
 
 impl sqlx::TransactionManager for Connection {
@@ -296,7 +288,12 @@ impl<'c> sqlx::Executor<'c> for &'c Connection {
     {
         tracing::debug!("FETCH-MANYing {}", query.sql());
         // The args-exec dance needs to go on the SqlxConnection object
-        let args = query.take_arguments().unwrap_or_default();
+        let args = match query.take_arguments() {
+            Ok(a) => a.unwrap_or_default(),
+            Err(e) => {
+                return Box::pin(futures::stream::once(async move { Err(sqlx::Error::Encode(e)) }));
+            }
+        };
         let rs = match self.0.execute(query.sql(), args.as_slice()).as_sqlx_result() {
             Ok(rs) => rs,
             Err(e) => {
@@ -323,7 +320,12 @@ impl<'c> sqlx::Executor<'c> for &'c Connection {
             E: sqlx::Execute<'q, Self::Database>,
     {
         tracing::debug!("EXECing {}", query.sql());
-        let args = query.take_arguments().unwrap_or_default();
+        let args = match query.take_arguments() {
+            Ok(a) => a.unwrap_or_default(),
+            Err(e) => {
+                return Box::pin(async move { Err(sqlx::Error::Encode(e)) });
+            }
+        };
         let rs = match self.0.execute(query.sql(), args.as_slice()).as_sqlx_result() {
             Ok(rs) => rs,
             Err(e) => {
@@ -345,7 +347,12 @@ impl<'c> sqlx::Executor<'c> for &'c Connection {
         E: sqlx::Execute<'q, Self::Database>
     {
         tracing::debug!("FETCH-OPTIONALing {}", query.sql());
-        let args = query.take_arguments().unwrap_or_default();
+        let args = match query.take_arguments() {
+            Ok(a) => a.unwrap_or_default(),
+            Err(e) => {
+                return Box::pin(async move { Err(sqlx::Error::Encode(e)) });
+            }
+        };
         let rs = match self.0.execute(query.sql(), args.as_slice()).as_sqlx_result() {
             Ok(rs) => rs,
             Err(e) => {
@@ -367,7 +374,7 @@ impl<'c> sqlx::Executor<'c> for &'c Connection {
         self,
         sql: &'q str,
         _parameters: &'e [<Self::Database as sqlx::Database>::TypeInfo],
-    ) -> BoxFuture<'e, Result<<Self::Database as sqlx::database::HasStatement<'q>>::Statement, sqlx::Error>>
+    ) -> BoxFuture<'e, Result<<Self::Database as sqlx::Database>::Statement<'q>, sqlx::Error>>
     where
         'c: 'e {
         let stmt = SpinSqliteStmt::new(sql);

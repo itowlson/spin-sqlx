@@ -34,7 +34,7 @@ impl sqlx::Row for SpinSqliteRow {
     fn try_get_raw<I>(
         &self,
         index: I,
-    ) -> Result<<Self::Database as sqlx::database::HasValueRef<'_>>::ValueRef, sqlx::Error>
+    ) -> Result<<Self::Database as sqlx::Database>::ValueRef<'_>, sqlx::Error>
     where
         I: sqlx::ColumnIndex<Self> {
         let uindex = index.index(&self)?;
@@ -108,7 +108,7 @@ impl<'q> sqlx::ValueRef<'q> for SpinSqliteValue {
 impl sqlx::Value for SpinSqliteValue {
     type Database = Connection;
 
-    fn as_ref(&self) -> <Self::Database as sqlx::database::HasValueRef<'_>>::ValueRef {
+    fn as_ref(&self) -> <Self::Database as sqlx::Database>::ValueRef<'_> {
         todo!()
     }
 
