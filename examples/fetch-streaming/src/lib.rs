@@ -1,6 +1,6 @@
 use futures::SinkExt;
 use futures::stream::StreamExt;
-use spin_sdk::http::{Fields, IncomingRequest, OutgoingResponse, ResponseOutparam};
+use spin_sdk::http::{Headers, IncomingRequest, OutgoingResponse, ResponseOutparam};
 use spin_sdk::http_component;
 
 #[derive(Debug, sqlx::FromRow)]
@@ -19,9 +19,11 @@ impl std::fmt::Display for Pet {
 
 #[http_component]
 async fn handle_fetch_many(_req: IncomingRequest, resp: ResponseOutparam) {
-    let og = OutgoingResponse::new(200, &Fields::new(&[
-        ("content-type".into(), "text/plain".into())
-    ]));
+    let headers = Headers::new();
+    headers.append(&"content-type".into(), &"text/plain".into()).unwrap();
+    let og = OutgoingResponse::new(headers);
+    og.set_status_code(200).unwrap();
+
     let mut resp_stm = og.take_body();
     resp.set(og);
 
@@ -47,7 +49,7 @@ async fn handle_fetch_many(_req: IncomingRequest, resp: ResponseOutparam) {
 
     let mut resp_lines = pets.map(|pet| match pet {
         Ok(pet) => Ok(format!("{pet}\n").into_bytes()),
-        Err(e) => Err(spin_sdk::http::Error::UnexpectedError(format!("{e:?}"))),
+        Err(e) => Ok(format!("{e:?}").into_bytes()), // TODO: would prefer this to be Err(StreamError) but that's not constructible
     });
 
     _ = resp_stm.send_all(&mut resp_lines).await;

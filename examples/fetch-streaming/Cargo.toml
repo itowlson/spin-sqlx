@@ -11,7 +11,8 @@ crate-type = ["cdylib"]
 [dependencies]
 anyhow = "1"
 futures = { version = "0.3.19", default-features = false }
-spin-sdk = "2.2"
+spin-executor = "3.0"
+spin-sdk = "3.0"
 spin-sqlx = { path = "../.." }
 sqlx = "0.7.2"
 
