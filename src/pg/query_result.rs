@@ -48,6 +48,12 @@ impl sqlx::Row for SpinPgRow {
     }
 }
 
+impl SpinPgQueryResult {
+    pub fn count(&self) -> u64 {
+        self.count
+    }
+}
+
 impl Extend<SpinPgQueryResult> for SpinPgQueryResult {
     fn extend<T: IntoIterator<Item = SpinPgQueryResult>>(&mut self, iter: T) {
         for qr in iter.into_iter() {
