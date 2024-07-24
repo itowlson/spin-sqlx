@@ -1,6 +1,6 @@
 # spin-sqlx
 
-A partial implementation of sqlx for Fermyon Spin's SQLite database.
+A partial implementation of sqlx for Fermyon Spin's SQLite database and PostgreSQL API.
 
 Things that work (at least in my one, super simple, test case!):
 
@@ -13,10 +13,10 @@ Things that don't:
 * Logging
 * Error handling, really. Sorry
 
-Example:
+Example (SQLite):
 
 ```rust
-// CREATE TABLE pets (age INTETGER, name TEXT, is_finicky BOOL, real_thingy REAL, blobbles BINARY);
+// CREATE TABLE pets (age INTEGER, name TEXT, is_finicky BOOL, real_thingy REAL, blobbles BINARY);
 
 #[derive(Debug, sqlx::FromRow)]
 struct Pet {
@@ -29,7 +29,7 @@ struct Pet {
 
 #[http_component]
 async fn handle_sqlxtest(_req: Request) -> anyhow::Result<impl IntoResponse> {
-    let sqlx_conn = spin_sqlx::Connection::open_default()?;
+    let sqlx_conn = spin_sqlx::sqlite::Connection::open_default()?;
 
     let pets: Vec<Pet> = sqlx::query_as("SELECT * FROM pets WHERE age < ?")
         .bind(7)

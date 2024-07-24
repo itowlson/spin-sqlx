@@ -13,7 +13,7 @@ component = "fetch-one"
 [component.fetch-one]
 source = "fetch-one/target/wasm32-wasi/release/fetch_one.wasm"
 sqlite_databases = ["default"]
-allowed_outbound_hosts = []
+allowed_outbound_hosts = ["postgres://localhost:5432"]
 [component.fetch-one.build]
 command = "cargo build --target wasm32-wasi --release"
 workdir = "fetch-one"
@@ -26,7 +26,7 @@ component = "fetch-many"
 [component.fetch-many]
 source = "fetch-many/target/wasm32-wasi/release/fetch_many.wasm"
 sqlite_databases = ["default"]
-allowed_outbound_hosts = []
+allowed_outbound_hosts = ["postgres://localhost:5432"]
 [component.fetch-many.build]
 command = "cargo build --target wasm32-wasi --release"
 workdir = "fetch-many"
@@ -39,7 +39,7 @@ component = "fetch-streaming"
 [component.fetch-streaming]
 source = "fetch-streaming/target/wasm32-wasi/release/fetch_streaming.wasm"
 sqlite_databases = ["default"]
-allowed_outbound_hosts = []
+allowed_outbound_hosts = ["postgres://localhost:5432"]
 [component.fetch-streaming.build]
 command = "cargo build --target wasm32-wasi --release"
 workdir = "fetch-streaming"
@@ -52,7 +52,7 @@ component = "execute-insert"
 [component.execute-insert]
 source = "execute-insert/target/wasm32-wasi/release/execute_insert.wasm"
 sqlite_databases = ["default"]
-allowed_outbound_hosts = []
+allowed_outbound_hosts = ["postgres://localhost:5432"]
 [component.execute-insert.build]
 command = "cargo build --target wasm32-wasi --release"
 workdir = "execute-insert"

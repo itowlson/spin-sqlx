@@ -3,7 +3,7 @@ use spin_sdk::http_component;
 
 #[derive(Debug, sqlx::FromRow)]
 struct Pet {
-    age: u32,
+    age: i32,
     name: String,
     is_finicky: bool,
 }
@@ -17,9 +17,14 @@ impl std::fmt::Display for Pet {
 
 #[http_component]
 async fn handle_fetch_one(_req: Request) -> anyhow::Result<impl IntoResponse> {
-    let sqlx_conn = spin_sqlx::sqlite::Connection::open_default()?;
+    // SQLite
+    // let sqlx_conn = spin_sqlx::sqlite::Connection::open_default()?;
+    // let query_sql = "SELECT * FROM pets WHERE name = ?";
+    // PostgreSQL
+    let sqlx_conn = spin_sqlx::pg::Connection::open("host=localhost user=postgres password=my_password dbname=mydb")?;
+    let query_sql = "SELECT * FROM pets WHERE name = $1";
 
-    let pet: Pet = sqlx::query_as("SELECT * FROM pets WHERE name = ?")
+    let pet: Pet = sqlx::query_as(query_sql)
         .bind("Slats")
         .fetch_one(&sqlx_conn)
         .await?;

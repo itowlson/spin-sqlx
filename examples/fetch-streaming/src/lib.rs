@@ -5,7 +5,7 @@ use spin_sdk::http_component;
 
 #[derive(Debug, sqlx::FromRow)]
 struct Pet {
-    age: u32,
+    age: i32,
     name: String,
     is_finicky: bool,
 }
@@ -25,7 +25,15 @@ async fn handle_fetch_many(_req: IncomingRequest, resp: ResponseOutparam) {
     let mut resp_stm = og.take_body();
     resp.set(og);
 
-    let sqlx_conn = match spin_sqlx::sqlite::Connection::open_default() {
+    // SQLite
+    // let sqlx_conn = spin_sqlx::sqlite::Connection::open_default();
+    // let query_sql = "SELECT * FROM pets WHERE age < ?";
+
+    // PostgreSQL
+    let sqlx_conn = spin_sqlx::pg::Connection::open("host=localhost user=postgres password=my_password dbname=mydb");
+    let query_sql = "SELECT * FROM pets WHERE age < $1";
+
+    let sqlx_conn = match sqlx_conn {
         Ok(c) => c,
         Err(e) => {
             _ = resp_stm.send(format!("{e:?}").into()).await;
@@ -33,7 +41,7 @@ async fn handle_fetch_many(_req: IncomingRequest, resp: ResponseOutparam) {
         }
     };
 
-    let pets = sqlx::query_as::<_, Pet>("SELECT * FROM pets WHERE age < ?")
+    let pets = sqlx::query_as::<_, Pet>(query_sql)
         .bind(20)
         .fetch(&sqlx_conn);
 
